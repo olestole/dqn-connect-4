@@ -71,6 +71,25 @@ class TestAdd(unittest.TestCase):
           self.assertIn("Diagonal win 1", capturedOutput.getvalue())
           self.assertEqual(is_done, True)
           self.assertEqual(game.winner, 1)
+
+     def test_draw(self):
+          capturedOutput = StringIO()                  # Create StringIO object
+          sys.stdout = capturedOutput                  #  and redirect stdout.
+          
+          game = ConnectX()
+          new_board = np.array([[2, 1, 2, 2, 2, 1, 2],
+                                [1, 2, 1, 1, 1, 2, 1],
+                                [2, 1, 2, 2, 2, 1, 2],
+                                [1, 2, 1, 1, 1, 2, 1],
+                                [2, 1, 2, 2, 2, 1, 2],
+                                [1, 2, 1, 1, 1, 2, 1]])
+          game.set_board(new_board)
+          is_done = game.is_done()
+          sys.stdout = sys.__stdout__                   # Reset redirect.
+          
+          self.assertIn("Draw", capturedOutput.getvalue())
+          self.assertEqual(is_done, True)
+          self.assertEqual(game.winner, 0)
      
      def test_reset_board(self):
           game = ConnectX()

@@ -40,7 +40,10 @@ class ConnectX():
                 return True
         return False
     
-    def valid_positions(self) -> list:
+    def valid_positions(self, only_cols = True) -> list:
+        if (only_cols):
+            return [i for i in range(self.width) if self.is_valid_column(i)]
+        
         valid_positions = []
         for i in range(self.width):
             for j in range(self.height - 1, -1, -1):
@@ -55,26 +58,6 @@ class ConnectX():
             self.player = 2
         else:
             self.player = 1
-
-    def _count_coins(self, axis = 1, value = 1):
-        """
-        axis = 0: horizontal
-        axis = 1: vertical
-        value: value to be counted, e.g. 0, 1
-        """
-        count = np.count_nonzero(self.board == value, axis=axis)
-        return count
-
-    def _decide_winner(self, arr_ones, arr_twos) -> int:
-        max1 = np.max(arr_ones)
-        max2 = np.max(arr_twos)
-
-        if (max1 >= self.connect):
-            return 1
-        elif (max2 >= self.connect):
-            return 2
-        return 0
-
 
     def has_winner(self) -> int:        
         # Vertical win
