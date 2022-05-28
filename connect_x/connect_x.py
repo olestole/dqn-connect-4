@@ -1,4 +1,3 @@
-from turtle import width
 import numpy as np
 
 class ConnectX():
@@ -9,6 +8,12 @@ class ConnectX():
         self.board = np.zeros((height, width), dtype = int)
         self.player = start_player
         self.winner = 0
+
+    def set_board(self, board):
+        self.board = board
+    
+    def get_board(self):
+        return self.board
     
     def is_valid_column(self, col):
         # Placed coin outside of board
@@ -114,8 +119,10 @@ class ConnectX():
             return True
         return False
 
+    def reset(self):
+        self.board = np.zeros((self.height, self.width), dtype = int)
+        self.player = 1
+        self.winner = 0
+
     def __str__(self) -> str:
-        return '\n'.join(['\t'.join([str(cell) for cell in row]) for row in self.board])
-    
-    def __repr__(self) -> str:
         return '\n'.join(['\t'.join([str(cell) for cell in row]) for row in self.board])
