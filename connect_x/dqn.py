@@ -24,12 +24,13 @@ class DQN():
     def predict(self, state):
         return self.model.predict(state)
         
-    def update(self, experiences, discount_factor):
+    def update(self, experiences, discount_factor, target_network):
         # Use the sampled batch from replay buffer to update the network
         states, actions, rewards, next_states, dones = experiences
-        next_Q_values = self.predict(next_states)
+        # Sample next_Q_values from the target_network, and not the main_network
+        next_Q_values = target_network.predict(np.array(next_states))
         max_next_Q_values = np.max(next_Q_values, axis=1)
-        target_Q_values = (rewards + (1-dones) * discount_factor * max_next_Q_values)
+        target_Q_values = (rewards + (1 - dones) * discount_factor * max_next_Q_values)
         mask = tf.one_hot(actions, self.n_outputs)
         
         with tf.GradientTape() as tape:
@@ -40,6 +41,10 @@ class DQN():
         grads = tape.gradient(loss, self.model.trainable_variables)
         self.optimizer.apply_gradients(zip(grads, self.model.trainable_variables))
         
-
+    def save_weights(self, path):
+        self.model.save_weights(path)
+    
+    def load_weights(self, path):
+        self.model.load_weights(path)
         
         
