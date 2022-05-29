@@ -1,13 +1,21 @@
 import numpy as np
+import gym
 
-class ConnectX():
+class ConnectX(gym.Env):
     def __init__(self, width = 7, height = 6, connect = 4, start_player = 1):
         self.width = width
         self.height = height
         self.connect = connect
         self.board = np.zeros((height, width), dtype = int)
-        self.player = start_player
+        self.start_player = start_player
+        self.player = self.start_player
         self.winner = 0
+
+        self.illegal_moves = 0
+
+        # Gym attributes
+        self.action_space = gym.spaces.Discrete(width)
+        self.observation_space = gym.spaces.Box(low = 0, high = 2, shape = (height, width), dtype = int)
 
     def set_board(self, board):
         self.board = board
@@ -27,16 +35,15 @@ class ConnectX():
 
     
     def place_coin(self, col):
-        if (not self.is_valid_column(col)):
-            print("Invalid column")
-            return False
+        # TODO: Remove this, it's handled in step
+        # if (not self.is_valid_column(col)):
+        #     print("Invalid column")
+        #     return False
         
         # Simulate gravity
         for i in range(self.height - 1, -1, -1):
-            print(i)
             if (self.board[i, col] == 0):
                 self.board[i, col] = self.player
-                self._change_player()
                 return True
         return False
     
@@ -101,11 +108,81 @@ class ConnectX():
             print(f"Game is done\nDraw")
             return True
         return False
+    
+    def handle_illegal_move(self, action):
+        print("Invalid action")
+        self.illegal_moves += 1
+        info = {
+            'illegal_moves': self.illegal_moves,
+            'player': self.player,
+            'legal_move': False
+        }
+        
+        # Return a negative reward to the player who made repeated illegal moves
+        if (self.illegal_moves >= 2):
+            print("Too many invalid moves!")
+            reward = -1
+            return self.board, reward, True, info
 
+        is_done = self.is_done()
+        reward = self.calculate_reward()
+        self.place_coin(action)
+
+        return self.board, self.winner, is_done, info
+
+    def step(self, action):
+        """
+        Args: action
+        Returns: observation, reward, done, info
+        """
+        if (not self.is_valid_column(action)):
+            return self.handle_illegal_move(action)
+
+        self.illegal_moves = 0
+        self.place_coin(action)
+        is_done = self.is_done()
+        reward = self.calculate_reward()
+        info = {
+            'illegal_moves': self.illegal_moves,
+            'player': self.player,
+            'legal_move': True
+        }
+        
+        self._change_player()
+        return self.board, reward, is_done, info
+    
+    def calculate_reward(self):
+        if (self.winner == self.player):
+            return 1
+        elif (self.winner == 0):
+            return 0
+        else:
+            return -1
+
+    def render(self, mode = 'human'):
+        for i in range(self.height):
+            print("|", end = "")
+            for j in range(self.width):
+                if (self.board[i, j] == 1):
+                    print("X", end = " ")
+                elif (self.board[i, j] == 2):
+                    print("O", end = " ")
+                else:
+                    print("-", end = " ")
+            print("|\n", end="")
+        print("\n")
+    
     def reset(self):
+        """
+        Returns: observation
+        """
         self.board = np.zeros((self.height, self.width), dtype = int)
-        self.player = 1
+        self.player = self.start_player
         self.winner = 0
+        return self.board
+    
+    def close(self):
+        pass
 
     def __str__(self) -> str:
         return '\n'.join(['\t'.join([str(cell) for cell in row]) for row in self.board])
