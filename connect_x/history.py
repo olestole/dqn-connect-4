@@ -9,6 +9,10 @@ class History():
             self.history[key] = []
         self.history[key].append(value)
     
+    def add_tuples(self, tuples):
+        for t in tuples:
+            self.add(t[0], t[1])
+    
     def get(self, key):
         return self.history[key]
     

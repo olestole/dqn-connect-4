@@ -1,4 +1,3 @@
-from collections import deque
 import tensorflow as tf
 import numpy as np
 import logging
@@ -25,7 +24,7 @@ class DQN():
         return model
     
     def predict(self, state):
-        return self.model.predict(state)
+        return self.model.predict(state, verbose=0)
         
     def update(self, experiences, discount_factor, target_network):
         # Use the sampled batch from replay buffer to update the network

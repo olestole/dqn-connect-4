@@ -36,11 +36,10 @@ class ConnectX(gym.Env):
         return True
 
     
-    def place_coin(self, col):
-        # TODO: Remove this, it's handled in step
-        # if (not self.is_valid_column(col)):
-        #     print("Invalid column")
-        #     return False
+    def place_coin(self, col, allow_illegal = True):
+        if (not self.is_valid_column(col) and not allow_illegal):
+            print("Invalid column")
+            return False
         
         # Simulate gravity
         for i in range(self.height - 1, -1, -1):
@@ -63,12 +62,9 @@ class ConnectX(gym.Env):
 
 
     def _change_player(self):
-        if (self.player == 1):
-            self.player = 2
-        else:
-            self.player = 1
+        self.player = 2 if self.player == 1 else 1
 
-    def has_winner(self) -> int:        
+    def check_winner(self) -> int:        
         # Vertical win
         for i in range(self.height - self.connect + 1):
             for j in range(self.width):
@@ -106,15 +102,17 @@ class ConnectX(gym.Env):
         return 0
     
     def is_done(self) -> bool:
-        if (self.has_winner() != 0):
+        if (self.check_winner() != 0):
             logging.debug(f"Game is done\tWinner: {self.winner}")
             return True
+
         if (np.count_nonzero(self.board == 0) == 0):
             logging.debug(f"Game is done\tDraw")
             return True
         return False
     
     def handle_illegal_move(self, action):
+        # TODO: Clean this up, don't return this function
         logging.debug("Invalid action")
         self.illegal_moves += 1
         info = {
@@ -132,11 +130,11 @@ class ConnectX(gym.Env):
             reward = -1
             return self.board, reward, True, info
 
-        is_done = self.is_done()
+        done = self.is_done()
         reward = self.calculate_reward()
         self.place_coin(action)
 
-        return self.board, self.winner, is_done, info
+        return self.board, self.winner, done, info
 
     def step(self, action):
         """
@@ -148,19 +146,19 @@ class ConnectX(gym.Env):
 
         self.illegal_moves = 0
         self.place_coin(action)
-        is_done = self.is_done()
+        done = self.is_done()
         reward = self.calculate_reward()
         info = {
             'illegal_moves': self.illegal_moves,
             'player': self.player,
             'legal_move': True
         }
-        if (is_done):
+        if (done):
             info['winner'] = self.winner
             info['done_type'] = self.done_type
         
         self._change_player()
-        return self.board, reward, is_done, info
+        return self.board, reward, done, info
     
     def calculate_reward(self):
         if (self.winner == self.player):
@@ -170,7 +168,7 @@ class ConnectX(gym.Env):
         else:
             return -1
 
-    def render(self, mode = 'human'):
+    def render(self):
         for i in range(self.height):
             print("|", end = "")
             for j in range(self.width):
