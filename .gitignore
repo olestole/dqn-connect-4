@@ -127,3 +127,10 @@ ui-tests/playwright-report
 
 # VSCode
 .vscode
+
+# Weights
+*.data-*
+*.index
+
+# History
+*.pkl

@@ -13,6 +13,7 @@ class ConnectX(gym.Env):
         self.winner = 0
 
         self.illegal_moves = 0
+        self.done_type = None
 
         # Gym attributes
         self.action_space = gym.spaces.Discrete(width)
@@ -73,8 +74,9 @@ class ConnectX(gym.Env):
             for j in range(self.width):
                 for player in range(1, 3):
                     if (self.board[i, j] == self.board[i + 1, j] == self.board[i + 2, j] == self.board[i + 3, j] == player):
-                        logging.info(f"Vertical win for player {player}")
+                        logging.debug(f"Vertical win for player {player}")
                         self.winner = player
+                        self.done_type = "vertical"
                         return player
         
         # Horizontal win
@@ -82,8 +84,9 @@ class ConnectX(gym.Env):
             for j in range(self.width - self.connect + 1):
                 for player in range(1, 3):
                     if (self.board[i, j] == self.board[i, j + 1] == self.board[i, j + 2] == self.board[i, j + 3] == player):
-                        logging.info(f"Horizontal win for player {player}")
+                        logging.debug(f"Horizontal win for player {player}")
                         self.winner = player
+                        self.done_type = "horizontal"
                         return player
         
         # Diagonal win
@@ -95,23 +98,24 @@ class ConnectX(gym.Env):
             for i in range(len(diag) - self.connect + 1):
                 for player in range(1, 3):
                     if (diag[i] == diag[i + 1] == diag[i + 2] == diag[i + 3] == player or diag_flipped[i] == diag_flipped[i + 1] == diag_flipped[i + 2] == diag_flipped[i + 3] == player):
-                        logging.info(f"Diagonal win for player {player}")
+                        logging.debug(f"Diagonal win for player {player}")
                         self.winner = player
+                        self.done_type = "diagonal"
                         return player
             k += 1
         return 0
     
     def is_done(self) -> bool:
         if (self.has_winner() != 0):
-            logging.info(f"Game is done\tWinner: {self.winner}")
+            logging.debug(f"Game is done\tWinner: {self.winner}")
             return True
         if (np.count_nonzero(self.board == 0) == 0):
-            logging.info(f"Game is done\tDraw")
+            logging.debug(f"Game is done\tDraw")
             return True
         return False
     
     def handle_illegal_move(self, action):
-        logging.info("Invalid action")
+        logging.debug("Invalid action")
         self.illegal_moves += 1
         info = {
             'illegal_moves': self.illegal_moves,
@@ -121,7 +125,10 @@ class ConnectX(gym.Env):
         
         # Return a negative reward to the player who made repeated illegal moves
         if (self.illegal_moves >= 2):
-            logging.info("Too many invalid moves!")
+            logging.debug("Too many invalid moves!")
+            self.done_type = "illegal_moves"
+            info['winner'] = self.winner
+            info['done_type'] = self.done_type
             reward = -1
             return self.board, reward, True, info
 
@@ -148,6 +155,9 @@ class ConnectX(gym.Env):
             'player': self.player,
             'legal_move': True
         }
+        if (is_done):
+            info['winner'] = self.winner
+            info['done_type'] = self.done_type
         
         self._change_player()
         return self.board, reward, is_done, info

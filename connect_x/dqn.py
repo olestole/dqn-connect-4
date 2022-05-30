@@ -1,6 +1,9 @@
 from collections import deque
 import tensorflow as tf
 import numpy as np
+import logging
+
+from history import History
 
 class DQN():
     def __init__(self, input_shape, n_outputs):
@@ -40,6 +43,8 @@ class DQN():
         
         grads = tape.gradient(loss, self.model.trainable_variables)
         self.optimizer.apply_gradients(zip(grads, self.model.trainable_variables))
+        logging.info(f"Loss: {loss}")
+        return loss
         
     def save_weights(self, path):
         self.model.save_weights(path)
