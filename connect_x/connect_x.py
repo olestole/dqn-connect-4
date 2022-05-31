@@ -124,7 +124,7 @@ class ConnectX(gym.Env):
         # Return a negative reward to the player who made repeated illegal moves
         if (self.illegal_moves >= 2):
             logging.debug("Too many invalid moves!")
-            self.done_type = "illegal_moves"
+            self.done_type = "illegal_move"
             info['winner'] = self.winner
             info['done_type'] = self.done_type
             reward = -1

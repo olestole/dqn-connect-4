@@ -19,7 +19,6 @@ class DQN():
             tf.keras.layers.Flatten(),
             tf.keras.layers.Dense(n_outputs, activation='softmax')
         ])
-        model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=0.001), loss=tf.losses.mean_squared_error)
         model.summary()
         return model
     
@@ -42,7 +41,7 @@ class DQN():
         
         grads = tape.gradient(loss, self.model.trainable_variables)
         self.optimizer.apply_gradients(zip(grads, self.model.trainable_variables))
-        logging.info(f"Loss: {loss}")
+        # logging.info(f"Loss: {loss}")
         return loss
         
     def save_weights(self, path):
@@ -50,5 +49,9 @@ class DQN():
     
     def load_weights(self, path):
         self.model.load_weights(path)
-        
-        
+    
+    def get_weights(self):
+        return self.model.get_weights()
+    
+    def set_weights(self, weights):
+        self.model.set_weights(weights)

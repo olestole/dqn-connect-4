@@ -18,4 +18,3 @@ class Agent():
             return self.env.action_space.sample()
         else:
             return self.get_action(observation)
-    

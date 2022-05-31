@@ -6,17 +6,17 @@ import numpy as np
 
 CHECKPOINT_DIR = "../checkpoints"
 HISTORY_DIR = "../history"
-WEIGHT_ITERATION = 10
+WEIGHT_ITERATION = 15
 
 def main():
     env = ConnectX()
 
     # Create the training agent with prelaoded weights
-    target_network_weights_path = os.path.join(CHECKPOINT_DIR, f"main_{WEIGHT_ITERATION}_1900")
+    target_network_weights_path = os.path.join(CHECKPOINT_DIR, f"main_{WEIGHT_ITERATION}_40600")
     target_network = DQN(env.observation_space.shape, env.action_space.n)
     target_network.load_weights(target_network_weights_path)
     main_network = DQN(env.observation_space.shape, env.action_space.n)
-    main_network_weights_path = os.path.join(CHECKPOINT_DIR, f"main_{WEIGHT_ITERATION}_1900")
+    main_network_weights_path = os.path.join(CHECKPOINT_DIR, f"main_{WEIGHT_ITERATION}_40600")
     main_network.load_weights(main_network_weights_path)
     training_agent = Agent(env, main_network, target_network)
 
@@ -28,9 +28,10 @@ def main():
         state, reward, done, info = env.step(action)
         env.render()
         while (not info['legal_move'] and not done):
-                action = training_agent.get_action(state)
-                state, reward, done, info = env.step(action)
-                env.render()
+            action = training_agent.get_action(state)
+            state, reward, done, info = env.step(action)
+            env.render()
+            print(info['illegal_moves'])
         
         if (done): break
 
