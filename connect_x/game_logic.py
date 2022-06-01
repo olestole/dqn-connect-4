@@ -9,8 +9,8 @@ def calculate_reward(info, done):
     """
     Win:
     - Vertical              + 0.5
-    - Horizontal            + 2
-    - Diagonal              + 2
+    - Horizontal            + 3
+    - Diagonal              + 3
 
     Loss:
     - Vertical              - 1
@@ -18,7 +18,7 @@ def calculate_reward(info, done):
     - Diagonal              - 1
 
     No winner:
-    - Illegal move:         - 5
+    - Illegal move:         - 10
     - Enemy illegal move:   + 0
     - Draw:                 + 0
     """
@@ -29,7 +29,7 @@ def calculate_reward(info, done):
     if (info['winner'] == 0):
         # Training_agent played 2+ illegal moves
         if (info['done_type'] == 'illegal_move' and info['player'] == 1):
-            return -5
+            return -10
         elif (info['done_type'] == 'illegal_move' and info['player'] == 2):
             return 0
         else:
@@ -40,9 +40,9 @@ def calculate_reward(info, done):
         if (info['done_type'] == 'vertical'):
             return 0.5
         elif (info['done_type'] == 'horizontal'):
-            return 2
+            return 3
         elif (info['done_type'] == 'diagonal'):
-            return 2
+            return 3
     
     if (info['winner'] == 2):
         # Training_agent lost
@@ -54,9 +54,9 @@ def calculate_reward(info, done):
             return -1
 
 
-def calculate_epsilon(n: int, min_rate=0.01) -> float:
+def calculate_epsilon(n: int, min_rate=0.05) -> float:
         """Decaying exploration rate"""
-        return max(min_rate, min(1.0, 1.0 - math.log10((n  + 1) / 25)))
+        return max(min_rate, min(1.0, 1.0 - math.log10((n  + 1) / 70)))
 
 
 def one_step(env, action):
@@ -71,7 +71,6 @@ def generate_ckpt_path(run_settings, episode, epoch):
 
 
 def training_step(main_network: DQN, target_network: DQN, memory, episode: int, run_settings, epoch, batch_size=32):
-
     checkpoint_path = generate_ckpt_path(run_settings, episode, epoch)
     mini_batch = memory.sample(batch_size)
     loss = main_network.update(mini_batch, 0.95, target_network)
@@ -87,11 +86,10 @@ def training_step(main_network: DQN, target_network: DQN, memory, episode: int, 
 
 
 def log_episode(episode: int, n_episodes):
-    if (episode % 25 == 0):
+    if (episode % 10 == 0):
         logging.info(f"Episode: {episode} / {n_episodes}")
 
-
-def handle_if_done(done, info, memory, state, action, reward, initial_state, history, training, main_network, target_network, episode, move_n, run_settings, epoch, player = 1):
+def handle_if_done(done, info, memory, state, action, reward, initial_state, history, training, main_network, target_network, episode, move_n, run_settings, epoch, opponent_agent, player = 1):
     if (not done):
         return False
     
@@ -105,7 +103,8 @@ def handle_if_done(done, info, memory, state, action, reward, initial_state, his
         history.add("loss", loss)
 
     logging.info(f"Reward: {reward}")
-    history.add_tuples([("player_1_reward", reward), ("winner", info['winner']), ("done_type", info['done_type']), ("final_state", state), ("game_length", episode)])
+    history.add_tuples([("player_1_reward", reward), ("winner", info['winner']), ("done_type", info['done_type']), ("final_state", state), \
+        ("game_length", move_n), ("opponent_policy", opponent_agent.main_network.name)])
     logging.debug(f"\n-----\nEpisode finished after {move_n+1} timesteps:\nreward: {reward}\ndone: {done}\ninfo: {info}\n-----\n")
     return True
 
@@ -113,9 +112,11 @@ def handle_if_done(done, info, memory, state, action, reward, initial_state, his
 def run_dqn(n_episodes, env, main_network, target_network, memory, training_agent, opponent_agent, history, run_settings, epoch, training = True):
     for episode in range(n_episodes):
         log_episode(episode, run_settings['N_EPISODES'])
-        epsilon = calculate_epsilon(episode)
-        opponent_epsilon = 0 if training else 1 # Random if testing, greedy when training
+        epsilon = calculate_epsilon(episode) if training else 0 # If testing, always be greedy
+        # opponent_epsilon = 0 if training else 1 # Random if testing, greedy when training
+        opponent_epsilon = calculate_epsilon(episode) # Random if testing, greedy when training
         state = env.reset()
+
         
         for move_n in range(1000):
             # Copy the initial state so that we have a copy when adding it to the replay buffer
@@ -130,7 +131,7 @@ def run_dqn(n_episodes, env, main_network, target_network, memory, training_agen
                 action = training_agent.get_action_epsilon_greedy(epsilon, state)
                 state, reward, done, info = one_step(env, action)
 
-            is_done = handle_if_done(done, info, memory, state, action, reward, initial_state, history, training, main_network, target_network, episode, move_n, run_settings, epoch)
+            is_done = handle_if_done(done, info, memory, state, action, reward, initial_state, history, training, main_network, target_network, episode, move_n, run_settings, epoch, opponent_agent)
             if (is_done): break
 
             # Opponent takes action
@@ -144,5 +145,5 @@ def run_dqn(n_episodes, env, main_network, target_network, memory, training_agen
             # Add to replay buffer since both agents have made a move
             memory.add(initial_state, action, reward, np.copy(state), done)
 
-            is_done = handle_if_done(done, info, memory, state, action, reward, initial_state, history, training, main_network, target_network, episode, move_n, run_settings, epoch, player = 2)
+            is_done = handle_if_done(done, info, memory, state, action, reward, initial_state, history, training, main_network, target_network, episode, move_n, run_settings, epoch, opponent_agent, player = 2)
             if (is_done): break

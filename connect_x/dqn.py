@@ -5,20 +5,42 @@ import logging
 from history import History
 
 class DQN():
-    def __init__(self, input_shape, n_outputs):
+    def __init__(self, input_shape, n_outputs, initial_weights_path = None, network_model = 1, name = None):
         self.n_outputs = n_outputs
         self.input_shape = input_shape
-        self.model = self.create_network(input_shape, n_outputs)
+        self.model = self.create_network(input_shape, n_outputs, network_model)
         self.optimizer = tf.keras.optimizers.Adam(learning_rate=0.001)
         self.loss_fn = tf.losses.mean_squared_error
+        self.name = name
+
+        if initial_weights_path is not None:
+            self.load_weights(initial_weights_path)
     
-    def create_network(self, input_shape, n_outputs):
-        model = tf.keras.Sequential([
-            tf.keras.layers.Dense(64, activation='relu', input_shape=input_shape),
-            tf.keras.layers.Dense(64, activation='relu'),
-            tf.keras.layers.Flatten(),
-            tf.keras.layers.Dense(n_outputs, activation='softmax')
-        ])
+    def create_network(self, input_shape, n_outputs, network_model):
+        model = None
+        if network_model == 1:
+            model = tf.keras.Sequential([
+                tf.keras.layers.Dense(64, activation='relu', input_shape=input_shape),
+                tf.keras.layers.Dense(64, activation='relu'),
+                tf.keras.layers.Flatten(),
+                tf.keras.layers.Dense(n_outputs, activation='linear')
+            ])
+        elif network_model == 2:
+            model = tf.keras.Sequential([
+                tf.keras.layers.Conv2D(32, (3, 3), activation='relu', input_shape=(input_shape[0], input_shape[1], 1)), # 1 channel input
+                tf.keras.layers.Dense(64, activation='relu'),
+                tf.keras.layers.Flatten(),
+                tf.keras.layers.Dense(n_outputs, activation='linear')
+            ])
+        elif network_model == 3:
+            model = tf.keras.Sequential([
+                tf.keras.layers.Conv2D(32, (4, 4), activation='relu', input_shape=(input_shape[0], input_shape[1], 1)), # 1 channel input
+                tf.keras.layers.Conv2D(32, (2, 2), activation='relu'),
+                tf.keras.layers.Conv2D(32, (2, 2), activation='relu'),                
+                tf.keras.layers.Dense(64, activation='relu'),
+                tf.keras.layers.Flatten(),
+                tf.keras.layers.Dense(n_outputs, activation='linear')
+            ])
         model.summary()
         return model
     
@@ -48,10 +70,12 @@ class DQN():
         self.model.save_weights(path)
     
     def load_weights(self, path):
+        self.name = path
         self.model.load_weights(path)
     
     def get_weights(self):
         return self.model.get_weights()
     
-    def set_weights(self, weights):
+    def set_weights(self, weights, name = None):
+        self.name = name
         self.model.set_weights(weights)

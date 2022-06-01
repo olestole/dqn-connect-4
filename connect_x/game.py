@@ -6,18 +6,16 @@ import numpy as np
 
 CHECKPOINT_DIR = "../checkpoints"
 HISTORY_DIR = "../history"
-WEIGHT_ITERATION = 15
+WEIGHT_ITERATION = 22
 
 def main():
     env = ConnectX()
 
     # Create the training agent with prelaoded weights
-    target_network_weights_path = os.path.join(CHECKPOINT_DIR, f"main_{WEIGHT_ITERATION}_40600")
-    target_network = DQN(env.observation_space.shape, env.action_space.n)
-    target_network.load_weights(target_network_weights_path)
-    main_network = DQN(env.observation_space.shape, env.action_space.n)
-    main_network_weights_path = os.path.join(CHECKPOINT_DIR, f"main_{WEIGHT_ITERATION}_40600")
-    main_network.load_weights(main_network_weights_path)
+    target_network_weights_path = os.path.join(CHECKPOINT_DIR, f"main_{WEIGHT_ITERATION}_32000")
+    main_network_weights_path = os.path.join(CHECKPOINT_DIR, f"main_{WEIGHT_ITERATION}_32000")
+    target_network = DQN(env.observation_space.shape, env.action_space.n, initial_weights_path=target_network_weights_path, network_model=3)
+    main_network = DQN(env.observation_space.shape, env.action_space.n, initial_weights_path=main_network_weights_path, network_model=3)
     training_agent = Agent(env, main_network, target_network)
 
     state = env.reset()
