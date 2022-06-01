@@ -1,8 +1,5 @@
 import tensorflow as tf
 import numpy as np
-import logging
-
-from history import History
 
 class DQN():
     def __init__(self, input_shape, n_outputs, initial_weights_path = None, network_model = 1, name = None):
@@ -47,9 +44,9 @@ class DQN():
     def predict(self, state):
         return self.model.predict(state, verbose=0)
         
+    # Note: Same update function leveraging GradientTape as in professor's notebook. Don't see any problem of using it.
     def update(self, experiences, discount_factor, target_network):
-        # Use the sampled batch from replay buffer to update the network
-        states, actions, rewards, next_states, dones = experiences
+        states, actions, rewards, next_states, dones = experiences # Use the sampled batch from replay buffer to update the network
         # Sample next_Q_values from the target_network, and not the main_network
         next_Q_values = target_network.predict(np.array(next_states))
         max_next_Q_values = np.max(next_Q_values, axis=1)
@@ -63,7 +60,6 @@ class DQN():
         
         grads = tape.gradient(loss, self.model.trainable_variables)
         self.optimizer.apply_gradients(zip(grads, self.model.trainable_variables))
-        # logging.info(f"Loss: {loss}")
         return loss
         
     def save_weights(self, path):

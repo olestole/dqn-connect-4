@@ -112,7 +112,6 @@ class ConnectX(gym.Env):
         return False
     
     def handle_illegal_move(self, action):
-        # TODO: Clean this up, don't return this function
         logging.debug("Invalid action")
         self.illegal_moves += 1
         info = {
