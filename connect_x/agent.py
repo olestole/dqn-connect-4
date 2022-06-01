@@ -18,3 +18,7 @@ class Agent():
             return self.env.action_space.sample()
         else:
             return self.get_action(observation)
+    
+    def change_network_weights(self, weights):
+        self.target_network.set_weights(weights)
+        self.main_network.set_weights(weights)
